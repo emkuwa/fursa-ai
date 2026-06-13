@@ -2,7 +2,7 @@ import type { AgentConfig, OpportunityCategory } from '@/types'
 
 export const APP_NAME = 'Fursa AI'
 export const APP_DESCRIPTION = 'Your AI-Powered Opportunity Intelligence Platform for Africa. Discover scholarships, jobs, grants, and more.'
-export const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://fursaai.com'
+export const APP_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://fursaai.com').replace(/\/+$/, '').trim()
 
 export const CATEGORIES: { value: OpportunityCategory; label: string; description: string; icon: string }[] = [
   { value: 'scholarship', label: 'Scholarships', description: 'Study abroad opportunities with full or partial funding', icon: 'GraduationCap' },
