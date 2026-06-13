@@ -1,0 +1,258 @@
+import type { AgentConfig, OpportunityCategory } from '@/types'
+
+export const APP_NAME = 'Fursa AI'
+export const APP_DESCRIPTION = 'Your AI-Powered Opportunity Intelligence Platform for Africa. Discover scholarships, jobs, grants, and more.'
+export const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://fursaai.com'
+
+export const CATEGORIES: { value: OpportunityCategory; label: string; description: string; icon: string }[] = [
+  { value: 'scholarship', label: 'Scholarships', description: 'Study abroad opportunities with full or partial funding', icon: 'GraduationCap' },
+  { value: 'foreign_job', label: 'Foreign Jobs', description: 'International employment opportunities', icon: 'Briefcase' },
+  { value: 'grant', label: 'Grants', description: 'Funding for projects, research, and initiatives', icon: 'HandCoins' },
+  { value: 'tender', label: 'Tenders', description: 'Business and government contract opportunities', icon: 'FileText' },
+  { value: 'fellowship', label: 'Fellowships', description: 'Professional development and research programs', icon: 'Award' },
+  { value: 'startup_funding', label: 'Startup Funding', description: 'Venture capital and investor opportunities', icon: 'Rocket' },
+  { value: 'competition', label: 'Competitions', description: 'Prizes, hackathons, and challenges', icon: 'Trophy' },
+  { value: 'internship', label: 'Internships', description: 'Work experience and training programs', icon: 'BookOpen' },
+  { value: 'exchange_program', label: 'Exchange Programs', description: 'Cultural and academic exchange opportunities', icon: 'Globe' },
+]
+
+export const AGENTS: AgentConfig[] = [
+  {
+    name: 'source_discovery',
+    description: 'Discovers and maintains opportunity sources',
+    cron_schedule: '0 6 */2 * *',
+    is_active: true,
+    max_retries: 3,
+    timeout_seconds: 300,
+  },
+  {
+    name: 'opportunity_collection',
+    description: 'Collects opportunities from approved sources',
+    cron_schedule: '0 */4 * * *',
+    is_active: true,
+    max_retries: 3,
+    timeout_seconds: 600,
+  },
+  {
+    name: 'deduplication',
+    description: 'Removes duplicate opportunities',
+    cron_schedule: '0 */6 * * *',
+    is_active: true,
+    max_retries: 2,
+    timeout_seconds: 300,
+  },
+  {
+    name: 'opportunity_analysis',
+    description: 'Analyzes opportunities using AI',
+    cron_schedule: '0 */3 * * *',
+    is_active: true,
+    max_retries: 3,
+    timeout_seconds: 600,
+  },
+  {
+    name: 'opportunity_ranking',
+    description: 'Ranks opportunities with AI scoring',
+    cron_schedule: '0 */4 * * *',
+    is_active: true,
+    max_retries: 2,
+    timeout_seconds: 600,
+  },
+  {
+    name: 'categorization',
+    description: 'Categorizes and tags opportunities',
+    cron_schedule: '0 */3 * * *',
+    is_active: true,
+    max_retries: 2,
+    timeout_seconds: 300,
+  },
+  {
+    name: 'translation',
+    description: 'Translates content to Swahili',
+    cron_schedule: '0 */6 * * *',
+    is_active: true,
+    max_retries: 2,
+    timeout_seconds: 300,
+  },
+  {
+    name: 'user_matching',
+    description: 'Matches opportunities to users',
+    cron_schedule: '0 */2 * * *',
+    is_active: true,
+    max_retries: 2,
+    timeout_seconds: 600,
+  },
+  {
+    name: 'alert',
+    description: 'Sends notifications to users',
+    cron_schedule: '0 8,18 * * *',
+    is_active: true,
+    max_retries: 3,
+    timeout_seconds: 120,
+  },
+  {
+    name: 'content_marketing',
+    description: 'Generates social media and blog content',
+    cron_schedule: '0 9 * * *',
+    is_active: true,
+    max_retries: 2,
+    timeout_seconds: 300,
+  },
+  {
+    name: 'seo',
+    description: 'Generates SEO-optimized pages',
+    cron_schedule: '0 5 * * *',
+    is_active: true,
+    max_retries: 2,
+    timeout_seconds: 600,
+  },
+  {
+    name: 'trend_analysis',
+    description: 'Analyzes platform trends',
+    cron_schedule: '0 7 * * 1',
+    is_active: true,
+    max_retries: 2,
+    timeout_seconds: 300,
+  },
+  {
+    name: 'revenue',
+    description: 'Tracks revenue and monetization',
+    cron_schedule: '0 */12 * * *',
+    is_active: true,
+    max_retries: 2,
+    timeout_seconds: 120,
+  },
+  {
+    name: 'application_assistant',
+    description: 'Helps users with applications',
+    cron_schedule: '0 0 * * *',
+    is_active: true,
+    max_retries: 2,
+    timeout_seconds: 300,
+  },
+  {
+    name: 'quality_control',
+    description: 'Audits all AI outputs',
+    cron_schedule: '0 */8 * * *',
+    is_active: true,
+    max_retries: 3,
+    timeout_seconds: 300,
+  },
+  {
+    name: 'admin_copilot',
+    description: 'Monitors entire platform and generates reports',
+    cron_schedule: '0 6 * * *',
+    is_active: true,
+    max_retries: 2,
+    timeout_seconds: 300,
+  },
+  {
+    name: 'analytics',
+    description: 'Tracks engagement, keywords, and success metrics',
+    cron_schedule: '0 */4 * * *',
+    is_active: true,
+    max_retries: 2,
+    timeout_seconds: 300,
+  },
+  {
+    name: 'recommendation',
+    description: 'Generates personalized recommendations for users',
+    cron_schedule: '0 */6 * * *',
+    is_active: true,
+    max_retries: 2,
+    timeout_seconds: 600,
+  },
+  {
+    name: 'referral',
+    description: 'Manages referral links and rewards',
+    cron_schedule: '30 */6 * * *',
+    is_active: true,
+    max_retries: 2,
+    timeout_seconds: 120,
+  },
+  {
+    name: 'premium_conversion',
+    description: 'Identifies users likely to upgrade',
+    cron_schedule: '0 */8 * * *',
+    is_active: true,
+    max_retries: 2,
+    timeout_seconds: 600,
+  },
+  {
+    name: 'daily_digest',
+    description: 'Generates and sends daily opportunity digests',
+    cron_schedule: '0 7 * * *',
+    is_active: true,
+    max_retries: 3,
+    timeout_seconds: 300,
+  },
+  {
+    name: 'freshness',
+    description: 'Scores freshness, archives expired opportunities, detects stale sources',
+    cron_schedule: '0 */6 * * *',
+    is_active: true,
+    max_retries: 2,
+    timeout_seconds: 300,
+  },
+  {
+    name: 'opportunity_map',
+    description: 'Generates country intelligence and opportunity maps',
+    cron_schedule: '0 6 * * *',
+    is_active: true,
+    max_retries: 2,
+    timeout_seconds: 300,
+  },
+]
+
+export const PLANS = {
+  free: {
+    name: 'Free',
+    price: 0,
+    monthly_matches: 50,
+    features: ['Browse opportunities', 'Weekly email digest', 'Basic search'],
+    popular: false,
+  },
+  premium: {
+    name: 'Premium',
+    price: 9.99,
+    monthly_matches: -1,
+    features: ['Instant WhatsApp & Email alerts', 'AI match scoring (0-100)', 'Save opportunities', 'AI Application Assistant', 'Priority support', 'Unlimited browsing'],
+    popular: true,
+  },
+  premium_plus: {
+    name: 'Premium Plus',
+    price: 19.99,
+    monthly_matches: -1,
+    features: ['Everything in Premium', 'Unlimited AI document generation', 'ATS-optimized CV builder', 'Advanced matching algorithm', 'Priority WhatsApp alerts', 'Dedicated support'],
+    popular: false,
+  },
+  enterprise: {
+    name: 'Enterprise',
+    price: 49.99,
+    monthly_matches: -1,
+    features: ['Everything in Premium Plus', 'API access', 'Custom integrations', 'Dedicated account manager', 'White-label options', 'SLA guarantee'],
+    popular: false,
+  },
+}
+
+export const COUNTRIES = [
+  'Tanzania', 'Kenya', 'Nigeria', 'Ghana', 'South Africa', 'Uganda', 'Rwanda', 'Ethiopia',
+  'Zambia', 'Zimbabwe', 'Botswana', 'Malawi', 'Mozambique', 'Namibia', 'Angola',
+  'Canada', 'USA', 'UK', 'Germany', 'Australia', 'Netherlands', 'Sweden', 'Norway',
+  'China', 'Japan', 'South Korea', 'UAE', 'Saudi Arabia', 'Qatar',
+] as const
+
+export const EDUCATION_LEVELS = [
+  'High School',
+  'Diploma',
+  'Bachelor',
+  'Master',
+  'PhD',
+  'Postdoctoral',
+] as const
+
+export const PROFESSIONS = [
+  'Accountant', 'Engineer', 'Doctor', 'Nurse', 'Teacher', 'Lawyer',
+  'Software Developer', 'Data Scientist', 'Architect', 'Journalist',
+  'Agricultural Specialist', 'Business Analyst', 'Project Manager',
+  'Researcher', 'Entrepreneur', 'Artist', 'Social Worker',
+] as const

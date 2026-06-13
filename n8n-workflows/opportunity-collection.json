@@ -1,0 +1,119 @@
+{
+  "name": "Fursa AI - Opportunity Collection Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": 240
+        }
+      },
+      "name": "Schedule (Every 4 Hours)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.FURSA_API_URL }}/api/agents/run",
+        "options": {},
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "agent", "value": "source_discovery" },
+            { "name": "action", "value": "initialize" }
+          ]
+        }
+      },
+      "name": "Trigger Source Discovery",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.FURSA_API_URL }}/api/agents/run",
+        "options": {},
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "agent", "value": "opportunity_collection" },
+            { "name": "action", "value": "collect" }
+          ]
+        }
+      },
+      "name": "Collect Opportunities",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.FURSA_API_URL }}/api/agents/run",
+        "options": {},
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "agent", "value": "deduplication" },
+            { "name": "action", "value": "deduplicate" }
+          ]
+        }
+      },
+      "name": "Deduplicate",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.FURSA_API_URL }}/api/agents/run",
+        "options": {},
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "agent", "value": "categorization" },
+            { "name": "action", "value": "categorize" }
+          ]
+        }
+      },
+      "name": "Categorize",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.FURSA_API_URL }}/api/agents/run",
+        "options": {},
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "agent", "value": "opportunity_analysis" },
+            { "name": "action", "value": "analyze" }
+          ]
+        }
+      },
+      "name": "Analyze with AI",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.FURSA_API_URL }}/api/agents/run",
+        "options": {},
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "agent", "value": "quality_control" },
+            { "name": "action", "value": "audit" }
+          ]
+        }
+      },
+      "name": "Quality Control",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1450, 300]
+    }
+  ],
+  "connections": {
+    "Schedule (Every 4 Hours)": { "main": [[ { "node": "Trigger Source Discovery" } ]] },
+    "Trigger Source Discovery": { "main": [[ { "node": "Collect Opportunities" } ]] },
+    "Collect Opportunities": { "main": [[ { "node": "Deduplicate" } ]] },
+    "Deduplicate": { "main": [[ { "node": "Categorize" } ]] },
+    "Categorize": { "main": [[ { "node": "Analyze with AI" } ]] },
+    "Analyze with AI": { "main": [[ { "node": "Quality Control" } ]] }
+  }
+}

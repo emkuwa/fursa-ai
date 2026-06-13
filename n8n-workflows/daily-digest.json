@@ -1,0 +1,52 @@
+{
+  "name": "Fursa AI - Daily Digest Notifications",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "hour": 8,
+          "minute": 0
+        }
+      },
+      "name": "Schedule (8 AM & 6 PM)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.FURSA_API_URL }}/api/agents/run",
+        "options": {},
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "agent", "value": "user_matching" },
+            { "name": "action", "value": "match-all" }
+          ]
+        }
+      },
+      "name": "Generate User Matches",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.FURSA_API_URL }}/api/agents/run",
+        "options": {},
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "agent", "value": "alert" },
+            { "name": "action", "value": "daily-digest" }
+          ]
+        }
+      },
+      "name": "Send Daily Digest",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [650, 300]
+    }
+  ],
+  "connections": {
+    "Schedule (8 AM & 6 PM)": { "main": [[ { "node": "Generate User Matches" } ]] },
+    "Generate User Matches": { "main": [[ { "node": "Send Daily Digest" } ]] }
+  }
+}

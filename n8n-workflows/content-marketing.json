@@ -1,0 +1,44 @@
+{
+  "name": "Fursa AI - Content Marketing Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "hour": 9,
+          "minute": 0
+        }
+      },
+      "name": "Schedule (Daily 9 AM)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.FURSA_API_URL }}/api/agents/run",
+        "options": {},
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "agent", "value": "content_marketing" },
+            { "name": "action", "value": "generate-all" }
+          ]
+        }
+      },
+      "name": "Generate Content",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "const items = $input.all();\nfor (const item of items) {\n  const content = item.json.data?.content;\n  if (content) {\n    // In production: post to social media APIs\n    console.log('Content ready for publishing:', content);\n  }\n}\nreturn items;"
+      },
+      "name": "Publish to Social Media",
+      "type": "n8n-nodes-base.code",
+      "position": [650, 300]
+    }
+  ],
+  "connections": {
+    "Schedule (Daily 9 AM)": { "main": [[ { "node": "Generate Content" } ]] },
+    "Generate Content": { "main": [[ { "node": "Publish to Social Media" } ]] }
+  }
+}
