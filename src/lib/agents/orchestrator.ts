@@ -65,6 +65,7 @@ export async function runFullPipeline() {
   results.push(await runAgent('source_discovery', 'score'))
   results.push(await runAgent('source_discovery', 'cleanup'))
   results.push(await runAgent('opportunity_collection', 'collect'))
+  results.push(await runAgent('opportunity_collection', 'promote'))
 
   // Phase 2: Processing & Dedup
   results.push(await runAgent('deduplication', 'deduplicate'))

@@ -95,10 +95,12 @@ CREATE TABLE opportunities (
   summary_sw TEXT,
   description_sw TEXT,
   social_copy TEXT,
+  hash TEXT,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
+CREATE UNIQUE INDEX idx_opportunities_hash ON opportunities(hash) WHERE hash IS NOT NULL;
 CREATE INDEX idx_opportunities_category ON opportunities(category);
 CREATE INDEX idx_opportunities_status ON opportunities(status);
 CREATE INDEX idx_opportunities_deadline ON opportunities(deadline);

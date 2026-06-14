@@ -17,6 +17,8 @@ export class OpportunityCollectionAgent extends BaseAgent {
         return this.collectFromSource(payload?.sourceId as string)
       case 'fetch-rss':
         return this.fetchFromRSS(payload?.url as string)
+      case 'promote':
+        return this.promoteFromRaw()
       default:
         return { success: false, message: `Unknown action: ${action}` }
     }
@@ -112,6 +114,76 @@ export class OpportunityCollectionAgent extends BaseAgent {
     } catch (error) {
       await this.log(`RSS fetch failed for ${url}: ${error}`, 'error')
       return { success: false, message: `RSS fetch failed: ${error}` }
+    }
+  }
+
+  private async promoteFromRaw(): Promise<AgentResult> {
+    await this.log('Starting raw→opportunities promotion')
+
+    const { data: rawOpps, error: fetchError } = await this.supabase
+      .from('raw_opportunities')
+      .select('id, source_id, title, description, url, deadline, country, category, organization, eligibility, hash')
+
+    if (fetchError) return { success: false, message: `Failed to fetch raw opportunities: ${fetchError.message}` }
+    if (!rawOpps?.length) return { success: true, message: 'No raw opportunities to promote', data: { promoted: 0, skipped: 0, duplicates: 0 } as any }
+
+    const { data: existingOpps } = await this.supabase
+      .from('opportunities')
+      .select('title, url, hash')
+
+    const existingTitles = new Set((existingOpps || []).map((r: any) => `${r.title}|||${r.url}`))
+    const existingHashes = new Set((existingOpps || []).map((r: any) => r.hash).filter(Boolean))
+
+    let promoted = 0
+    let skippedMissing = 0
+    let duplicates = 0
+    const sample: any[] = []
+
+    for (const raw of rawOpps) {
+      if (!raw.title || !raw.url) {
+        skippedMissing++
+        continue
+      }
+
+      if (existingHashes.has(raw.hash) || existingTitles.has(`${raw.title}|||${raw.url}`)) {
+        duplicates++
+        continue
+      }
+
+      const { error: insertError } = await this.supabase
+        .from('opportunities')
+        .insert({
+          source_id: raw.source_id,
+          title: raw.title,
+          description: raw.description,
+          summary: raw.description?.slice(0, 200) || null,
+          url: raw.url,
+          application_link: raw.url,
+          deadline: raw.deadline,
+          country: raw.country,
+          category: raw.category || 'scholarship',
+          organization: raw.organization,
+          eligibility: raw.eligibility,
+          status: 'pending',
+          quality_score: 50,
+        })
+
+      if (!insertError) {
+        existingHashes.add(raw.hash)
+        existingTitles.add(`${raw.title}|||${raw.url}`)
+        promoted++
+        if (sample.length < 5) {
+          sample.push({ title: raw.title, organization: raw.organization, category: raw.category, country: raw.country })
+        }
+      }
+    }
+
+    await this.log(`Promotion complete: ${promoted} promoted, ${duplicates} duplicates skipped, ${skippedMissing} missing fields`)
+
+    return {
+      success: true,
+      message: `Promoted ${promoted} opportunities from raw (${duplicates} duplicates, ${skippedMissing} skipped)`,
+      data: { promoted, duplicates, skipped: skippedMissing, totalRaw: rawOpps.length, sample } as any,
     }
   }
 }
