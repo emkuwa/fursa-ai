@@ -18,12 +18,14 @@ import { APP_URL } from '@/lib/constants'
 export const revalidate = 300
 
 export const metadata: Metadata = {
+  title: 'Jobs, Scholarships & Opportunities in Tanzania | Fursa AI',
+  description: 'Discover verified Tanzania jobs, scholarships, internships, grants and international opportunities from trusted sources.',
   alternates: { canonical: APP_URL },
 }
 
 const FEATURES = [
   { icon: Zap, title: 'AI-Powered Matching', description: 'Smart algorithms find opportunities tailored to your profile.' },
-  { icon: Globe, title: 'Africa-Focused', description: 'Curated opportunities for African students and professionals.' },
+  { icon: Globe, title: 'Tanzania & Global', description: 'Local Tanzania opportunities plus international scholarships and jobs.' },
   { icon: Users, title: 'Smart Alerts', description: 'Get notified via WhatsApp, Email, or Push when opportunities match.' },
   { icon: TrendingUp, title: 'Trend Analysis', description: 'Know which opportunities are trending and where.' },
   { icon: Sparkles, title: 'Application Assistant', description: 'AI helps craft cover letters, essays, and CVs.' },
@@ -313,12 +315,12 @@ export default async function HomePage() {
             AI-Powered Opportunity Discovery
           </div>
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-            Find <span className="text-amber-500">Scholarships</span>, Jobs &amp; Grants
+            Find <span className="text-amber-500">Jobs</span>, Scholarships &amp; Opportunities
             <br className="hidden sm:block" />
-            <span className="text-gray-700"> That Match Your Future</span>
+            <span className="text-gray-700"> in Tanzania and Beyond</span>
           </h1>
           <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            AI-powered platform helping African students and professionals discover verified scholarships, international jobs, grants, and fellowships — all in one place.
+            Discover verified Tanzania jobs, scholarships, internships, grants and international opportunities — all in one place.
           </p>
 
           {/* Quick-action category buttons */}
@@ -362,7 +364,7 @@ export default async function HomePage() {
 
           <div className="mt-6 flex flex-wrap justify-center gap-2 text-sm text-gray-500">
             <span className="text-gray-400">Popular searches:</span>
-            {['Scholarships in UK', 'Engineering Jobs in Canada', 'Grants for NGOs', 'Fully Funded PhD'].map(q => (
+            {['NGO Jobs in Tanzania', 'Scholarships in UK', 'Engineering Jobs in Canada', 'Grants for NGOs', 'Remote Jobs'].map(q => (
               <Link key={q} href={`/opportunities?q=${encodeURIComponent(q)}`} className="px-3 py-1 bg-white rounded-full border border-gray-200 hover:border-amber-300 hover:text-amber-600 transition-colors text-xs">
                 {q}
               </Link>
@@ -385,11 +387,10 @@ export default async function HomePage() {
               </div>
               <span className="hidden sm:inline text-xs text-gray-400">Updated continuously</span>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-5 divide-x divide-y md:divide-y-0 divide-gray-100">
+            <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-y md:divide-y-0 divide-gray-100">
               <StatTile value={data.stats.total} label="Total Opportunities" icon={Database} />
+              <StatTile value={data.stats.jobs} label="Tanzania Jobs" icon={Briefcase} />
               <StatTile value={data.stats.scholarships} label="Scholarships" icon={GraduationCap} />
-              <StatTile value={data.stats.jobs} label="Jobs" icon={Briefcase} />
-              <StatTile value={data.stats.grants} label="Grants" icon={HandCoins} />
               <StatTile value={data.stats.countries} label="Countries Covered" icon={Globe} />
             </div>
           </div>
@@ -560,7 +561,7 @@ export default async function HomePage() {
       <section className="py-16 px-4 bg-white">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-2xl md:text-3xl font-bold text-center mb-4">Why {APP_NAME}?</h2>
-          <p className="text-gray-600 text-center mb-10 max-w-xl mx-auto text-sm md:text-base">Built for Africa, powered by AI</p>
+          <p className="text-gray-600 text-center mb-10 max-w-xl mx-auto text-sm md:text-base">Built for Tanzania, powered by AI</p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {FEATURES.map((feature, i) => {
               const Icon = feature.icon
@@ -584,7 +585,7 @@ export default async function HomePage() {
       <section className="py-20 px-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-center">
         <div className="max-w-2xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Start Your Journey Today</h2>
-          <p className="text-lg mb-8 opacity-90">Join thousands of Africans discovering life-changing opportunities.</p>
+          <p className="text-lg mb-8 opacity-90">Join thousands of Tanzanians discovering life-changing opportunities.</p>
           <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
             <Link href="/register" className="inline-flex items-center justify-center px-8 py-4 bg-white text-amber-600 rounded-xl font-semibold text-lg hover:bg-gray-100 transition-colors shadow-lg">
               Get Started Free

@@ -1,7 +1,4 @@
 import { createClient } from '@supabase/supabase-js'
-import { config } from 'dotenv'
-
-// config({ path: '.env.local' })
 const supabaseUrl = 'https://beyuxtqfeymqqaycjzuk.supabase.co'
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJleXV4dHFmZXltcXFheWNqenVrIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MDM2MTA4MiwiZXhwIjoyMDk1OTM3MDgyfQ.H1m_qa_S35PENMFlJW94MX8SblEYBDytcx8NujjQu3I'
 

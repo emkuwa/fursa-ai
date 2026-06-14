@@ -26,7 +26,7 @@ export function SearchBar() {
           type="text"
           value={query}
           onChange={e => setQuery(e.target.value)}
-          placeholder="I am an accountant looking for scholarships in Europe"
+          placeholder="Search jobs, scholarships, internships or grants..."
           className="w-full pl-12 pr-32 py-4 rounded-2xl border-2 border-gray-200 bg-white shadow-lg text-lg focus:border-amber-500 focus:outline-none focus:ring-4 focus:ring-amber-100 transition-all"
         />
         <button
