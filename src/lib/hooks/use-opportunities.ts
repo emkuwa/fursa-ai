@@ -1,8 +1,20 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@supabase/supabase-js'
 import type { Opportunity, SearchFilters, OpportunityCategory } from '@/types'
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+let _dataClient: ReturnType<typeof createClient> | null = null
+function getDataClient() {
+  if (!_dataClient) {
+    _dataClient = createClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseAnonKey || 'placeholder-key', {
+      auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
+    })
+  }
+  return _dataClient
+}
 
 const SEARCH_SYNONYMS: Record<string, string> = {
   vacancy: 'job', vacancies: 'jobs', employment: 'jobs', employed: 'jobs',
@@ -91,7 +103,7 @@ export function useOpportunities(filters?: SearchFilters) {
 
   const fetch = useCallback(async () => {
     setLoading(true)
-    const supabase = createClient()
+    const supabase = getDataClient()
 
     let query = supabase
       .from('opportunities')
@@ -132,12 +144,27 @@ export function useOpportunities(filters?: SearchFilters) {
     const offset = (page - 1) * limit
     query = query.range(offset, offset + limit - 1)
 
-    const { data, count } = await query
+    const { data, count, error } = await query
 
-    setOpportunities((data || []) as unknown as Opportunity[])
-    setTotal(count || 0)
+    if (error) {
+      console.error('Error fetching opportunities:', error)
+      setOpportunities([])
+      setTotal(0)
+    } else {
+      setOpportunities((data || []) as unknown as Opportunity[])
+      setTotal(count || 0)
+    }
     setLoading(false)
-  }, [filters])
+  }, [
+    filters?.query,
+    filters?.category,
+    filters?.country,
+    filters?.min_quality_score,
+    filters?.page,
+    filters?.limit,
+    filters?.sort_by,
+    filters?.sort_order
+  ])
 
   useEffect(() => { fetch() }, [fetch])
 
@@ -149,28 +176,28 @@ export function useSavedOpportunities() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const supabase = createClient()
-
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) { setLoading(false); return }
-
-      supabase
-        .from('user_matches')
-        .select('opportunity_id')
-        .eq('user_id', user.id)
-        .eq('is_saved', true)
-        .then(async ({ data: matches }) => {
-          if (!matches?.length) { setLoading(false); return }
-
-          const { data } = await supabase
-            .from('opportunities')
-            .select('*')
-            .in('id', matches.map(m => m.opportunity_id))
-            .in('status', ['approved', 'featured'])
-
-          setOpportunities((data || []) as unknown as Opportunity[])
-          setLoading(false)
-        })
+    const supabase = getDataClient()
+    import('@/lib/supabase/client').then(({ createClient: createSSRClient }) => {
+      const ssrClient = createSSRClient()
+      ssrClient.auth.getUser().then(({ data: { user } }) => {
+        if (!user) { setLoading(false); return }
+        supabase
+          .from('user_matches')
+          .select('opportunity_id')
+          .eq('user_id', user.id)
+          .eq('is_saved', true)
+          .then(async ({ data: matches }) => {
+            if (!matches?.length) { setLoading(false); return }
+            const ids = (matches as unknown as { opportunity_id: string }[]).map(m => m.opportunity_id)
+            const { data } = await supabase
+              .from('opportunities')
+              .select('*')
+              .in('id', ids)
+              .in('status', ['approved', 'featured'])
+            setOpportunities((data || []) as unknown as Opportunity[])
+            setLoading(false)
+          })
+      })
     })
   }, [])
 
