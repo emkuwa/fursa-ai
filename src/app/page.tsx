@@ -104,6 +104,7 @@ async function getHomeData(): Promise<HomeData> {
       totalRes,
       scholarshipsRes,
       jobsRes,
+      tanzaniaJobsRes,
       grantsRes,
       countryRes,
       latestRes,
@@ -114,8 +115,10 @@ async function getHomeData(): Promise<HomeData> {
       supabase.from('opportunities').select('id', { count: 'exact', head: true }).in('status', statuses),
       supabase.from('opportunities').select('id', { count: 'exact', head: true }).eq('category', 'scholarship').in('status', statuses),
       supabase.from('opportunities').select('id', { count: 'exact', head: true }).eq('category', 'foreign_job').in('status', statuses),
+      supabase.from('opportunities').select('id', { count: 'exact', head: true }).eq('country', 'Tanzania').in('status', statuses),
       supabase.from('opportunities').select('id', { count: 'exact', head: true }).eq('category', 'grant').in('status', statuses),
       supabase.from('opportunities').select('country').not('country', 'is', null).in('status', statuses).limit(5000),
+
       supabase.from('opportunities').select(oppCols).in('status', statuses).order('created_at', { ascending: false }).limit(8),
       supabase.from('opportunities').select(oppCols).in('status', statuses).order('view_count', { ascending: false, nullsFirst: false }).order('is_featured', { ascending: false }).order('created_at', { ascending: false }).limit(6),
       supabase.from('sources').select('id, name, quality_score, region').eq('is_active', true).order('quality_score', { ascending: false, nullsFirst: false }).limit(50),

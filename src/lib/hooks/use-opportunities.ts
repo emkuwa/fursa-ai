@@ -2,7 +2,87 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import type { Opportunity, SearchFilters } from '@/types'
+import type { Opportunity, SearchFilters, OpportunityCategory } from '@/types'
+
+const SEARCH_SYNONYMS: Record<string, string> = {
+  vacancy: 'job', vacancies: 'jobs', employment: 'jobs', employed: 'jobs',
+  hiring: 'jobs', recruit: 'jobs', recruitment: 'jobs', position: 'jobs',
+  bursary: 'scholarship', bursaries: 'scholarships',
+  funding: 'grant', fund: 'grant', financed: 'grant',
+  training: 'internship', workshop: 'internship', program: 'internship',
+  challenge: 'competition', hackathon: 'competition',
+  procurement: 'tender', rfp: 'tender', rfq: 'tender',
+  workfromhome: 'remote', wfh: 'remote', telecommute: 'remote',
+  freelance: 'remote', distributed: 'remote', anywhere: 'remote',
+}
+
+const CATEGORY_KEYWORDS: Record<string, OpportunityCategory[]> = {
+  job: ['foreign_job'],
+  jobs: ['foreign_job'],
+  work: ['foreign_job'],
+  employment: ['foreign_job'],
+  career: ['foreign_job'],
+  vacancy: ['foreign_job'],
+  vacancies: ['foreign_job'],
+  hiring: ['foreign_job'],
+  recruit: ['foreign_job'],
+  recruitment: ['foreign_job'],
+  position: ['foreign_job'],
+  scholarship: ['scholarship'],
+  scholarships: ['scholarship'],
+  study: ['scholarship'],
+  education: ['scholarship'],
+  bursary: ['scholarship'],
+  bursaries: ['scholarship'],
+  grant: ['grant'],
+  grants: ['grant'],
+  funding: ['grant', 'startup_funding'],
+  fund: ['grant'],
+  fellowship: ['fellowship'],
+  fellowships: ['fellowship'],
+  tender: ['tender'],
+  tenders: ['tender'],
+  procurement: ['tender'],
+  rfp: ['tender'],
+  internship: ['internship'],
+  internships: ['internship'],
+  training: ['internship'],
+  workshop: ['internship'],
+  program: ['internship'],
+  competition: ['competition'],
+  competitions: ['competition'],
+  challenge: ['competition'],
+  hackathon: ['competition'],
+  startup: ['startup_funding'],
+  exchange: ['exchange_program'],
+}
+
+function expandSearchTerms(query: string): { textQuery: string | null; categories: OpportunityCategory[] } {
+  const words = query.toLowerCase().split(/\s+/).filter(Boolean)
+  const matchedCategories: OpportunityCategory[] = []
+  const remainingWords: string[] = []
+
+  for (const word of words) {
+    const cleaned = word.replace(/[^a-z]/g, '')
+    const expanded = SEARCH_SYNONYMS[cleaned] || cleaned
+    if (CATEGORY_KEYWORDS[expanded]) {
+      matchedCategories.push(...CATEGORY_KEYWORDS[expanded])
+    } else {
+      remainingWords.push(word)
+    }
+  }
+
+  const uniqueCategories = [...new Set(matchedCategories)]
+  const textQuery = remainingWords.length > 0 ? remainingWords.join(' ') : null
+
+  return { textQuery, categories: uniqueCategories }
+}
+
+function buildSearchFilter(query: string): string {
+  const q = query.replace(/%/g, '').replace(/\*/g, '')
+  const fields = ['title', 'description', 'summary', 'organization', 'country']
+  return fields.map(f => `${f}.ilike.*${q}*`).join(',')
+}
 
 export function useOpportunities(filters?: SearchFilters) {
   const [opportunities, setOpportunities] = useState<Opportunity[]>([])
@@ -23,14 +103,20 @@ export function useOpportunities(filters?: SearchFilters) {
     }
 
     if (filters?.country) {
-      query = query.eq('country', filters.country)
+      query = query.ilike('country', `%${filters.country}%`)
     }
 
     if (filters?.query) {
-      query = query.textSearch('title', filters.query, {
-        type: 'websearch',
-        config: 'english',
-      })
+      const { textQuery, categories } = expandSearchTerms(filters.query)
+
+      if (textQuery) {
+        const searchFilter = buildSearchFilter(textQuery)
+        query = query.or(searchFilter)
+      }
+
+      if (categories.length > 0 && !filters?.category) {
+        query = query.in('category', categories)
+      }
     }
 
     if (filters?.min_quality_score) {

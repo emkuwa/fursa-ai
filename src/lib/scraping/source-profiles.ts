@@ -192,6 +192,97 @@ export const SOURCE_PROFILES: Record<string, SourceProfile> = {
     listingUrl: 'https://www.giz.de/en/jobs',
     searchUrl: 'https://www.giz.de/en/jobs',
   },
+  'unicef.org': {
+    homepageUrl: 'https://www.unicef.org',
+    listingUrl: 'https://jobs.unicef.org/en-us/listing/',
+    opportunityUrlPatterns: ['/job/'],
+  },
+  'who.int': {
+    homepageUrl: 'https://www.who.int',
+    listingUrl: 'https://www.who.int/careers/process/v_listing/en/',
+    searchUrl: 'https://careers.who.int/careersection/ex/joblist.ftl',
+  },
+  'reliefweb.int': {
+    homepageUrl: 'https://reliefweb.int',
+    listingUrl: 'https://reliefweb.int/jobs',
+    opportunityUrlPatterns: ['/jobs/'],
+  },
+  'rescue.org': {
+    homepageUrl: 'https://www.rescue.org',
+    listingUrl: 'https://rescue.csod.com/ux/ats/careersite/1/home?c=rescue',
+  },
+  'nrc.no': {
+    homepageUrl: 'https://www.nrc.no',
+    listingUrl: 'https://ekum.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1001/',
+  },
+  'drc.ngo': {
+    homepageUrl: 'https://drc.ngo',
+    listingUrl: 'https://job.drc.ngo/jobs/',
+  },
+  'savethechildren.net': {
+    homepageUrl: 'https://www.savethechildren.net',
+    listingUrl: 'https://stc.taleo.net/careersection/ex/joblist.ftl',
+  },
+  'worldvision.org': {
+    homepageUrl: 'https://www.worldvision.org',
+    listingUrl: 'https://worldvision.wd1.myworkdayjobs.com/WorldVisionInternational',
+  },
+  'plan-international.org': {
+    homepageUrl: 'https://plan-international.org',
+    listingUrl: 'https://jobs.plan-international.org/',
+  },
+  'mercycorps.org': {
+    homepageUrl: 'https://www.mercycorps.org',
+    listingUrl: 'https://www.mercycorps.org/careers',
+  },
+  'devex.com': {
+    homepageUrl: 'https://www.devex.com',
+    listingUrl: 'https://www.devex.com/jobs/search',
+    opportunityUrlPatterns: ['/jobs/'],
+  },
+  'impactpool.org': {
+    homepageUrl: 'https://www.impactpool.org',
+    listingUrl: 'https://www.impactpool.org/jobs',
+    opportunityUrlPatterns: ['/jobs/'],
+  },
+  'epso.europa.eu': {
+    homepageUrl: 'https://epso.europa.eu',
+    listingUrl: 'https://epso.europa.eu/en/job-opportunities/open-for-application',
+  },
+  'imf.org': {
+    homepageUrl: 'https://www.imf.org',
+    listingUrl: 'https://imf.wd1.myworkdayjobs.com/IMF',
+  },
+  'au.int': {
+    homepageUrl: 'https://au.int',
+    listingUrl: 'https://careers.au.int/',
+  },
+  'ajira.go.tz': {
+    homepageUrl: 'http://portal.ajira.go.tz',
+    listingUrl: 'http://portal.ajira.go.tz/index.php/advert/index',
+    opportunityUrlPatterns: ['/advert/display/'],
+  },
+  'brightermonday.co.tz': {
+    homepageUrl: 'https://www.brightermonday.co.tz',
+    listingUrl: 'https://www.brightermonday.co.tz/jobs',
+    opportunityUrlPatterns: ['/listings/'],
+  },
+  'zoomtanzania.com': {
+    homepageUrl: 'https://www.zoomtanzania.com',
+    listingUrl: 'https://www.zoomtanzania.com/jobs',
+  },
+  'crdbbank.co.tz': {
+    homepageUrl: 'https://crdbbank.co.tz',
+    listingUrl: 'https://crdbbank.co.tz/careers/',
+  },
+  'nmbbank.co.tz': {
+    homepageUrl: 'https://www.nmbbank.co.tz',
+    listingUrl: 'https://www.nmbbank.co.tz/careers/',
+  },
+  'vodacom.co.tz': {
+    homepageUrl: 'https://www.vodacom.co.tz',
+    listingUrl: 'https://vodacom.taleo.net/careersection/2/joblist.ftl',
+  },
 }
 
 export function getSourceProfile(sourceUrl: string): SourceProfile | undefined {
