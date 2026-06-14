@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { SearchBar } from '@/components/ui/search-bar'
 import { EmailCapture } from '@/components/home/email-capture'
 import { Badge } from '@/components/ui/badge'
+import { PageViewTracker } from '@/components/analytics/page-view-tracker'
 import { CATEGORIES, APP_NAME } from '@/lib/constants'
 import { createServiceClient } from '@/lib/supabase/client'
 import { daysUntil, deadlineColor, urgencyLabel } from '@/lib/utils'
@@ -302,6 +303,7 @@ export default async function HomePage() {
 
   return (
     <>
+      <PageViewTracker page="homepage" />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

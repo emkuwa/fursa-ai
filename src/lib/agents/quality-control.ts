@@ -10,6 +10,8 @@ export class QualityControlAgent extends BaseAgent {
     switch (action) {
       case 'audit':
         return this.auditAll()
+      case 'approve':
+        return this.approvePending()
       case 'check-links':
         return this.checkBrokenLinks()
       case 'check-accuracy':
@@ -29,6 +31,43 @@ export class QualityControlAgent extends BaseAgent {
 
     const totalIssues = results.reduce((sum, r) => sum + (r.data?.issuesCount as number || 0), 0)
     return { success: true, message: `Audit complete: ${totalIssues} issues found` }
+  }
+
+  private async approvePending(): Promise<AgentResult> {
+    const { data: pending, error: fetchError } = await this.supabase
+      .from('opportunities')
+      .select('id, title, url, category, quality_score')
+      .eq('status', 'pending')
+
+    if (fetchError) return { success: false, message: `Failed to fetch pending: ${fetchError.message}` }
+    if (!pending?.length) return { success: true, message: 'No pending opportunities', data: { approved: 0, remaining: 0 } as any }
+
+    let approved = 0
+    let remaining = 0
+
+    for (const opp of pending) {
+      const hasTitle = !!opp.title
+      const hasUrl = !!opp.url
+      const hasCategory = !!opp.category
+      const hasMinScore = (opp.quality_score ?? 0) >= 50
+
+      if (hasTitle && hasUrl && hasCategory && hasMinScore) {
+        await this.supabase
+          .from('opportunities')
+          .update({ status: 'approved' })
+          .eq('id', opp.id)
+        approved++
+      } else {
+        remaining++
+      }
+    }
+
+    await this.log(`Approval complete: ${approved} approved, ${remaining} remaining pending`)
+    return {
+      success: true,
+      message: `Approved ${approved} opportunities, ${remaining} remaining pending`,
+      data: { approved, remaining, total: pending.length } as any,
+    }
   }
 
   private async checkBrokenLinks(): Promise<AgentResult> {

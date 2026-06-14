@@ -78,6 +78,7 @@ export async function runFullPipeline() {
   // Phase 4: Enhancement
   results.push(await runAgent('translation', 'translate'))
   results.push(await runAgent('quality_control', 'audit'))
+  results.push(await runAgent('quality_control', 'approve'))
 
   // Phase 5: Distribution & Matching
   results.push(await runAgent('user_matching', 'match-all'))

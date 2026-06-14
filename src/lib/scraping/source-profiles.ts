@@ -283,6 +283,30 @@ export const SOURCE_PROFILES: Record<string, SourceProfile> = {
     homepageUrl: 'https://www.vodacom.co.tz',
     listingUrl: 'https://vodacom.taleo.net/careersection/2/joblist.ftl',
   },
+  'tanzajob.com': {
+    homepageUrl: 'https://www.tanzajob.com',
+    listingUrl: 'https://www.tanzajob.com/jobs',
+    listingItemSelector: '.job-listing, .job-item, article',
+    itemTitleSelectors: ['.job-title', 'h2 a', 'h3 a'],
+    itemDescriptionSelectors: ['.job-description', '.summary', '.excerpt'],
+    itemDateSelectors: ['.posted', 'time', '.date'],
+    itemUrlSelectors: ['.job-title a', 'h2 a', 'h3 a'],
+    detailPageRequired: true,
+    opportunityUrlPatterns: ['/job/', '/jobs/'],
+    exclusionPatterns: ['/category/', '/tag/', '/page/'],
+  },
+  'jobweb.co.tz': {
+    homepageUrl: 'https://www.jobweb.co.tz',
+    listingUrl: 'https://www.jobweb.co.tz/jobs',
+    listingItemSelector: '.job-listing, .job-item, article',
+    itemTitleSelectors: ['.job-title', 'h2 a', 'h3 a'],
+    itemDescriptionSelectors: ['.job-description', '.summary', '.excerpt'],
+    itemDateSelectors: ['.posted', 'time', '.date'],
+    itemUrlSelectors: ['.job-title a', 'h2 a', 'h3 a'],
+    detailPageRequired: true,
+    opportunityUrlPatterns: ['/job/', '/jobs/'],
+    exclusionPatterns: ['/category/', '/tag/', '/page/'],
+  },
 }
 
 export function getSourceProfile(sourceUrl: string): SourceProfile | undefined {

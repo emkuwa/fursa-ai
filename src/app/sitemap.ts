@@ -36,6 +36,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'daily' as const,
     })),
     { url: `${APP_URL}/pricing`, priority: 0.5 as const, changeFrequency: 'monthly' as const },
+    { url: `${APP_URL}/about`, priority: 0.7 as const, changeFrequency: 'monthly' as const },
+    { url: `${APP_URL}/contact`, priority: 0.6 as const, changeFrequency: 'monthly' as const },
+    { url: `${APP_URL}/privacy`, priority: 0.3 as const, changeFrequency: 'yearly' as const },
+    { url: `${APP_URL}/terms`, priority: 0.3 as const, changeFrequency: 'yearly' as const },
     { url: `${APP_URL}/beta`, priority: 0.4 as const, changeFrequency: 'weekly' as const },
   ]
 

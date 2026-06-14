@@ -218,6 +218,7 @@ function genJobs(): SourceRegistryEntry[] {
     { url: 'https://www.ajira.go.tz', name: 'Ajira Tanzania', type: 'foreign_job', region: 'tanzania', frequency: 4, quality: 85 },
     { url: 'https://www.brightermonday.co.tz', name: 'BrighterMonday Tanzania', type: 'foreign_job', region: 'tanzania', frequency: 4, quality: 80 },
     { url: 'https://www.zoomtanzania.com', name: 'Zoom Tanzania', type: 'foreign_job', region: 'tanzania', frequency: 6, quality: 75 },
+    { url: 'https://www.tanzajob.com', name: 'Tanzajob.com', type: 'foreign_job', region: 'tanzania', frequency: 6, quality: 75 },
     { url: 'https://www.jobweb.co.tz', name: 'JobWeb Tanzania', type: 'foreign_job', region: 'tanzania', frequency: 6, quality: 75 },
     { url: 'https://www.mabumbe.com', name: 'Mabumbe Tanzania', type: 'foreign_job', region: 'tanzania', frequency: 6, quality: 75 },
     { url: 'https://www.fursa.co.tz', name: 'Fursa Tanzania', type: 'foreign_job', region: 'tanzania', frequency: 4, quality: 80 },

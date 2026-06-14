@@ -27,7 +27,8 @@ export async function updateSession(request: NextRequest) {
 
   const publicPaths = ['/login', '/register', '/api', '/_next', '/onboarding',
     '/opportunities', '/scholarships', '/jobs', '/grants', '/fellowships',
-    '/countries', '/pricing', '/beta', '/robots.txt', '/sitemap.xml']
+    '/countries', '/pricing', '/beta', '/robots.txt', '/sitemap.xml',
+    '/about', '/contact', '/privacy', '/terms']
 
   if (!user && !publicPaths.some(p => request.nextUrl.pathname.startsWith(p)) &&
       request.nextUrl.pathname !== '/') {

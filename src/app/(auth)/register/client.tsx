@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { useAnalytics } from '@/lib/hooks/use-analytics'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { APP_NAME } from '@/lib/constants'
@@ -16,6 +17,7 @@ export default function RegisterClient() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
+  const { track } = useAnalytics()
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -35,6 +37,7 @@ export default function RegisterClient() {
       setError(error.message)
       setLoading(false)
     } else {
+      track({ event_type: 'click', metadata: { action: 'register', email } })
       router.push('/onboarding')
     }
   }

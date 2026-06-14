@@ -28,12 +28,12 @@ export function Footer() {
             </ul>
           </div>
           <div>
-            <h4 className="text-white font-medium mb-3">Top Countries</h4>
+            <h4 className="text-white font-medium mb-3">Company</h4>
             <ul className="space-y-2 text-sm">
-              <li><Link href="/countries/United%20Kingdom" className="hover:text-white">UK Opportunities</Link></li>
-              <li><Link href="/countries/United%20States" className="hover:text-white">US Opportunities</Link></li>
-              <li><Link href="/countries/Canada" className="hover:text-white">Canada Opportunities</Link></li>
-              <li><Link href="/countries/Australia" className="hover:text-white">Australia Opportunities</Link></li>
+              <li><Link href="/about" className="hover:text-white">About Us</Link></li>
+              <li><Link href="/contact" className="hover:text-white">Contact</Link></li>
+              <li><Link href="/privacy" className="hover:text-white">Privacy Policy</Link></li>
+              <li><Link href="/terms" className="hover:text-white">Terms of Service</Link></li>
             </ul>
           </div>
         </div>
