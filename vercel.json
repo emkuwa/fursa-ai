@@ -1,8 +1,36 @@
 {
   "crons": [
     {
-      "path": "/api/cron/collect",
+      "path": "/api/cron/collect?batch=0,1&totalBatches=8&maxDurationMs=180000",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/collect?batch=2,3&totalBatches=8&maxDurationMs=180000",
+      "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/collect?batch=4,5&totalBatches=8&maxDurationMs=180000",
+      "schedule": "0 10 * * *"
+    },
+    {
+      "path": "/api/cron/collect?batch=6,7&totalBatches=8&maxDurationMs=180000",
+      "schedule": "0 12 * * *"
+    },
+    {
+      "path": "/api/cron/promote",
+      "schedule": "0 14 * * *"
+    },
+    {
+      "path": "/api/cron/categorize",
+      "schedule": "0 15 * * *"
+    },
+    {
+      "path": "/api/cron/approve",
+      "schedule": "0 16 * * *"
+    },
+    {
+      "path": "/api/cron/health",
+      "schedule": "0 17 * * *"
     }
   ]
 }

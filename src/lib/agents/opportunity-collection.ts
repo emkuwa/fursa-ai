@@ -12,19 +12,21 @@ export class OpportunityCollectionAgent extends BaseAgent {
   async execute(action: string, payload?: Record<string, unknown>): Promise<AgentResult> {
     switch (action) {
       case 'collect':
-        return this.collectFromAllSources()
+        return this.collectFromAllSources(payload as { batch?: number; totalBatches?: number; maxDurationMs?: number } | undefined)
       case 'collect-source':
         return this.collectFromSource(payload?.sourceId as string)
       case 'fetch-rss':
         return this.fetchFromRSS(payload?.url as string)
       case 'promote':
         return this.promoteFromRaw()
+      case 'promote-one':
+        return this.promoteSingleRaw(payload?.rawId as string)
       default:
         return { success: false, message: `Unknown action: ${action}` }
     }
   }
 
-  private async collectFromAllSources(): Promise<AgentResult> {
+  private async collectFromAllSources(opts?: { batch?: number; totalBatches?: number; maxDurationMs?: number }): Promise<AgentResult> {
     const { data: sources } = await this.supabase
       .from('sources')
       .select('id, url, name, type')
@@ -33,23 +35,52 @@ export class OpportunityCollectionAgent extends BaseAgent {
 
     if (!sources?.length) return { success: true, message: 'No active sources found' }
 
+    const batch = opts?.batch ?? 0
+    const totalBatches = opts?.totalBatches ?? 1
+    const batchSize = Math.ceil(sources.length / totalBatches)
+    const startIdx = batch * batchSize
+    const batchSources = sources.slice(startIdx, startIdx + batchSize)
+
+    if (!batchSources.length) {
+      return { success: true, message: `Batch ${batch}: no sources in range (total ${sources.length})` }
+    }
+
+    const startTime = Date.now()
+    const maxDuration = opts?.maxDurationMs ?? 120_000
     let total = 0
-    for (const source of sources) {
+    let successCount = 0
+    let errorCount = 0
+    const timedOut: string[] = []
+
+    for (const source of batchSources) {
+      if (Date.now() - startTime > maxDuration) {
+        timedOut.push(source.name)
+        continue
+      }
       try {
         const result = await this.scrapeSource(source)
         if (result > 0) {
           await this.supabase
             .from('sources')
-            .update({ last_crawled_at: new Date().toISOString() })
+            .update({
+              last_crawled_at: new Date().toISOString(),
+              collection_count: this.supabase.rpc('increment', { x: result }),
+            } as any)
             .eq('id', source.id)
+          successCount++
         }
         total += result
       } catch (error) {
+        errorCount++
         await this.log(`Failed to scrape ${source.url}: ${error}`, 'error')
       }
     }
 
-    return { success: true, message: `Collected ${total} opportunities from ${sources.length} sources` }
+    return {
+      success: true,
+      message: `Batch ${batch}/${totalBatches - 1}: ${total} opportunities from ${batchSources.length} sources (${successCount} ok, ${errorCount} err, ${timedOut.length} timed out)`,
+      data: { totalSources: batchSources.length, total, successCount, errorCount, timedOut: timedOut.length } as any,
+    }
   }
 
   private async collectFromSource(sourceId: string): Promise<AgentResult> {
@@ -80,6 +111,8 @@ export class OpportunityCollectionAgent extends BaseAgent {
         .update(opp.title + opp.url)
         .digest('hex')
 
+      const category = opp.category || source.type || 'scholarship'
+
       const { error } = await this.supabase
         .from('raw_opportunities')
         .insert({
@@ -90,7 +123,7 @@ export class OpportunityCollectionAgent extends BaseAgent {
           url: opp.url,
           deadline: opp.deadline,
           country: opp.country,
-          category: opp.category as any,
+          category: category as any,
           organization: opp.organization,
           eligibility: opp.eligibility,
           raw_html: opp.rawHtml,
@@ -98,6 +131,19 @@ export class OpportunityCollectionAgent extends BaseAgent {
         })
 
       if (!error) count++
+    }
+
+    if (count > 0) {
+      const { data: src } = await this.supabase
+        .from('sources')
+        .select('collection_count')
+        .eq('id', source.id)
+        .single()
+      const current = (src as any)?.collection_count || 0
+      await this.supabase
+        .from('sources')
+        .update({ collection_count: current + count, last_crawled_at: new Date().toISOString() })
+        .eq('id', source.id)
     }
 
     return count
@@ -115,6 +161,46 @@ export class OpportunityCollectionAgent extends BaseAgent {
       await this.log(`RSS fetch failed for ${url}: ${error}`, 'error')
       return { success: false, message: `RSS fetch failed: ${error}` }
     }
+  }
+
+  private async promoteSingleRaw(rawId: string): Promise<AgentResult> {
+    const { data: raw } = await this.supabase
+      .from('raw_opportunities')
+      .select('id, source_id, title, description, url, deadline, country, category, organization, eligibility, hash')
+      .eq('id', rawId)
+      .single()
+
+    if (!raw) return { success: false, message: 'Raw opportunity not found' }
+    if (!raw.title || !raw.url) return { success: false, message: 'Missing title or url' }
+
+    const { data: existing } = await this.supabase
+      .from('opportunities')
+      .select('id')
+      .or(`hash.eq.${raw.hash},and(title.eq.${raw.title.replace(/'/g, "''")},url.eq.${raw.url.replace(/'/g, "''")})`)
+      .maybeSingle()
+
+    if (existing) return { success: true, message: 'Duplicate, skipped' }
+
+    const { error } = await this.supabase
+      .from('opportunities')
+      .insert({
+        source_id: raw.source_id,
+        title: raw.title,
+        description: raw.description,
+        summary: raw.description?.slice(0, 200) || null,
+        url: raw.url,
+        application_link: raw.url,
+        deadline: raw.deadline,
+        country: raw.country,
+        category: raw.category || 'scholarship',
+        organization: raw.organization,
+        eligibility: raw.eligibility,
+        status: 'pending',
+        quality_score: 50,
+      })
+
+    if (error) return { success: false, message: error.message }
+    return { success: true, message: 'Promoted' }
   }
 
   private async promoteFromRaw(): Promise<AgentResult> {

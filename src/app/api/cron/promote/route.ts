@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/client'
 import { OpportunityCollectionAgent } from '@/lib/agents/opportunity-collection'
+import { CategorizationAgent } from '@/lib/agents/categorization'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
-export const maxDuration = 300
+export const maxDuration = 120
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization')
@@ -15,26 +16,13 @@ export async function GET(request: Request) {
   }
 
   const startTime = Date.now()
-  const { searchParams } = new URL(request.url)
-  const batchParam = searchParams.get('batch') || '0'
-  const totalBatches = parseInt(searchParams.get('totalBatches') || '8', 10)
-  const maxDurationMs = parseInt(searchParams.get('maxDurationMs') || '90000', 10)
-  const batches = batchParam.split(',').map(Number).filter(n => !isNaN(n))
-
   try {
-    const results = []
-    for (const b of batches) {
-      const r = await new OpportunityCollectionAgent().run('collect', {
-        batch: b,
-        totalBatches,
-        maxDurationMs,
-      })
-      results.push({ batch: b, result: r })
-    }
+    const promoteResult = await new OpportunityCollectionAgent().run('promote')
+    const categorizeResult = await new CategorizationAgent().run('categorize')
 
     const supabase = createServiceClient()
-    const { count: rawCount } = await supabase
-      .from('raw_opportunities')
+    const { count: oppCount } = await supabase
+      .from('opportunities')
       .select('*', { count: 'exact', head: true })
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(1)
@@ -42,10 +30,9 @@ export async function GET(request: Request) {
     return NextResponse.json({
       success: true,
       duration_seconds: parseFloat(duration),
-      raw_opportunities: rawCount,
-      batches,
-      totalBatches,
-      results,
+      total_opportunities: oppCount,
+      promote: promoteResult,
+      categorize: categorizeResult,
       timestamp: new Date().toISOString(),
     })
   } catch (error) {
