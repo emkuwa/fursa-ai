@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/client'
-import { OpportunityCollectionAgent } from '@/lib/agents/opportunity-collection'
-import { CategorizationAgent } from '@/lib/agents/categorization'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -17,10 +15,46 @@ export async function GET(request: Request) {
 
   const startTime = Date.now()
   try {
-    const promoteResult = await new OpportunityCollectionAgent().run('promote')
-    const categorizeResult = await new CategorizationAgent().run('categorize')
-
     const supabase = createServiceClient()
+
+    const { data: rawOpps } = await supabase
+      .from('raw_opportunities')
+      .select('*')
+
+    const { data: existingOpps } = await supabase
+      .from('opportunities')
+      .select('title, url')
+
+    const existingTitles = new Set((existingOpps || []).map(r => `${r.title}|||${r.url}`))
+
+    let promoted = 0, skipped = 0, duplicates = 0
+
+    for (const raw of rawOpps || []) {
+      if (!raw.title || !raw.url) { skipped++; continue }
+      if (existingTitles.has(`${raw.title}|||${raw.url}`)) { duplicates++; continue }
+
+      const { error } = await supabase.from('opportunities').insert({
+        source_id: raw.source_id,
+        title: raw.title,
+        description: raw.description,
+        summary: (raw.description || '').slice(0, 200) || null,
+        url: raw.url,
+        application_link: raw.url,
+        deadline: raw.deadline,
+        country: raw.country,
+        category: raw.category || 'scholarship',
+        organization: raw.organization,
+        eligibility: raw.eligibility,
+        status: 'pending',
+        quality_score: 50,
+      })
+
+      if (!error) {
+        existingTitles.add(`${raw.title}|||${raw.url}`)
+        promoted++
+      }
+    }
+
     const { count: oppCount } = await supabase
       .from('opportunities')
       .select('*', { count: 'exact', head: true })
@@ -31,8 +65,9 @@ export async function GET(request: Request) {
       success: true,
       duration_seconds: parseFloat(duration),
       total_opportunities: oppCount,
-      promote: promoteResult,
-      categorize: categorizeResult,
+      promoted,
+      duplicates,
+      skipped,
       timestamp: new Date().toISOString(),
     })
   } catch (error) {

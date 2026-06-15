@@ -1,12 +1,14 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/client'
-import { OpportunityCollectionAgent } from '@/lib/agents/opportunity-collection'
+import { getScrapingProvider } from '@/lib/scraping/provider'
+import { createHash } from 'crypto'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 export const maxDuration = 300
 
 export async function GET(request: Request) {
+  const scrapingProvider = getScrapingProvider()
   const authHeader = request.headers.get('authorization')
   const expectedToken = process.env.CRON_SECRET
 
@@ -21,23 +23,62 @@ export async function GET(request: Request) {
   const maxDurationMs = parseInt(searchParams.get('maxDurationMs') || '90000', 10)
   const batches = batchParam.split(',').map(Number).filter(n => !isNaN(n))
 
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), (maxDurationMs + 15000))
-
   try {
+    const supabase = createServiceClient()
     const results = []
+
     for (const b of batches) {
-      const r = await new OpportunityCollectionAgent().run('collect', {
-        batch: b,
-        totalBatches,
-        maxDurationMs: Math.min(maxDurationMs, 60000),
-      })
-      results.push({ batch: b, result: r })
+      const { data: sources } = await supabase
+        .from('sources')
+        .select('id, url, name, type')
+        .eq('is_active', true)
+        .order('quality_score', { ascending: false })
+
+      if (!sources?.length) {
+        results.push({ batch: b, message: 'No active sources' })
+        continue
+      }
+
+      const batchSize = Math.ceil(sources.length / totalBatches)
+      const startIdx = b * batchSize
+      const batchSources = sources.slice(startIdx, startIdx + batchSize)
+      const batchStart = Date.now()
+      let collected = 0, errors = 0
+
+      for (const source of batchSources) {
+        if (Date.now() - startTime > maxDurationMs) {
+          results.push({ batch: b, timedOut: true, collected, errors })
+          break
+        }
+        try {
+          const opps = await scrapingProvider.scrapeSource(source as any)
+          if (opps.length > 0) {
+            for (const opp of opps) {
+              const hash = createHash('sha256').update(opp.title + opp.url).digest('hex')
+              const { error } = await supabase.from('raw_opportunities').insert({
+                source_id: source.id,
+                title: opp.title,
+                description: opp.description,
+                url: opp.url,
+                deadline: opp.deadline,
+                country: opp.country,
+                category: opp.category || source.type || 'scholarship',
+                organization: opp.organization,
+                eligibility: opp.eligibility,
+                raw_html: opp.rawHtml,
+                hash,
+              }).maybeSingle()
+              if (!error) collected++
+            }
+            await supabase.from('sources').update({ last_crawled_at: new Date().toISOString() }).eq('id', source.id)
+          }
+        } catch (e) {
+          errors++
+        }
+      }
+      results.push({ batch: b, sources: batchSources.length, collected, errors, duration_ms: Date.now() - batchStart })
     }
 
-    clearTimeout(timeout)
-
-    const supabase = createServiceClient()
     const { count: rawCount } = await supabase
       .from('raw_opportunities')
       .select('*', { count: 'exact', head: true })
@@ -54,7 +95,6 @@ export async function GET(request: Request) {
       timestamp: new Date().toISOString(),
     })
   } catch (error) {
-    clearTimeout(timeout)
     return NextResponse.json({
       success: false,
       error: String(error),
