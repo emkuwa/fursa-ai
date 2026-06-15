@@ -6,6 +6,41 @@ interface CategoryResult {
   tags: string[]
 }
 
+const REJECT_TITLE_PATTERNS = [
+  /seminar/i, /conference/i, /webinar/i, /press release/i, /announcement/i,
+  /newsletter/i, /^snapshot of the month/i, /^chapter (spotlight|of the month)/i,
+  /^impact report/i, /^year in review/i, /^in remembrance/i, /^remembering /i,
+  /^welcome back/i, /^message from our new/i, /^night of champions/i,
+  /^celebrating excellence/i, /^highlights from the/i, /^reflecting on/i,
+  /^defending /i, /^#standfor/i, /standforfulbright/i,
+  /^eligibility$/i, /^work experience$/i, /^faqs?$/i, /^the process$/i,
+  /^eligible courses$/i, /^application timeline$/i, /^alumni$/i, /^partners$/i,
+  /^get inspired$/i, /^patron$/i, /^fellowships$/i, /^scholarships$/i,
+  /^how can i/i, /^can i (save|use|withdraw|reset|apply|delete)/i,
+  /^i registered/i, /^i cannot/i, /^what do i need/i, /^why study/i,
+  /^renowned/i, /^short, flexible/i, /^world-leading/i,
+  /^choosing the right/i, /^report a missing/i, /^guidance for/i,
+  /^getting ready/i, /^find a programme/i, /^host a /i,
+  /^use our toolkit/i, /^meet our current/i, /^get in touch/i,
+  /^latest news/i, /^processing your/i, /^2026 national board/i,
+  /^five free/i, /^conflict resolution and stability$/i,
+  /^science, technology/i, /^building skills to drive/i,
+  /^how .* is shaping/i, /^strengthening .* nutrition/i,
+  /^a leadership journey/i, /^building climate/i,
+  /^shaping the future/i, /^from .* to the emmys/i,
+  /^dr\. emmanuel/i,
+]
+
+const REJECT_ORG_PATTERNS = [
+  /read full article/i, /read more/i,
+]
+
+function isValidOpportunity(title: string, organization: string): boolean {
+  if (REJECT_TITLE_PATTERNS.some(p => p.test(title))) return false
+  if (REJECT_ORG_PATTERNS.some(p => p.test(organization))) return false
+  return true
+}
+
 const KEYWORD_RULES: Record<string, { keywords: string[]; tags: string[] }> = {
   scholarship: {
     keywords: ['scholarship', 'study', 'tuition', 'bachelor', 'master', 'phd', 'undergraduate', 'graduate', 'full funding', 'bursary'],
@@ -64,14 +99,27 @@ export class CategorizationAgent extends BaseAgent {
   private async categorizePending(): Promise<AgentResult> {
     const { data: opportunities } = await this.supabase
       .from('opportunities')
-      .select('id, title, description, category')
+      .select('id, title, description, category, organization')
       .is('tags', null)
       .limit(100)
 
     if (!opportunities?.length) return { success: true, message: 'No uncategorized opportunities' }
 
     let categorized = 0
+    let rejected = 0
     for (const opp of opportunities) {
+      if (!isValidOpportunity(opp.title, opp.organization || '')) {
+        await this.supabase
+          .from('opportunities')
+          .update({
+            status: 'rejected',
+            tags: ['rejected:non-opportunity'],
+          } as any)
+          .eq('id', opp.id)
+        rejected++
+        continue
+      }
+
       const result = this.categorizeByKeywords(opp.title, opp.description)
       if (result) {
         await this.supabase
@@ -85,7 +133,7 @@ export class CategorizationAgent extends BaseAgent {
       }
     }
 
-    return { success: true, message: `Categorized ${categorized} opportunities` }
+    return { success: true, message: `Categorized ${categorized}, rejected ${rejected} opportunities` }
   }
 
   private async categorizeOpportunity(opportunityId?: string): Promise<AgentResult> {

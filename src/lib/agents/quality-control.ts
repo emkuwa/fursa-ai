@@ -23,6 +23,7 @@ export class QualityControlAgent extends BaseAgent {
 
   private async auditAll(): Promise<AgentResult> {
     const results = await Promise.all([
+      this.checkContentQuality(),
       this.checkBrokenLinks(),
       this.checkAccuracy(),
       this.checkMissingDeadlines(),
@@ -31,6 +32,47 @@ export class QualityControlAgent extends BaseAgent {
 
     const totalIssues = results.reduce((sum, r) => sum + (r.data?.issuesCount as number || 0), 0)
     return { success: true, message: `Audit complete: ${totalIssues} issues found` }
+  }
+
+  private async checkContentQuality(): Promise<AgentResult> {
+    const REJECT_TITLE_PATTERNS = [
+      /seminar/i, /conference/i, /webinar/i, /press release/i, /announcement/i,
+      /^snapshot of the month/i, /^chapter (spotlight|of the month)/i,
+      /^impact report/i, /^year in review/i, /^in remembrance/i, /^remembering /i,
+      /^welcome back/i, /^message from our new/i, /^night of champions/i,
+      /^celebrating excellence/i, /^highlights from the/i, /^reflecting on/i,
+      /^defending /i, /^#standfor/i,
+      /^eligibility$/i, /^work experience$/i, /^faqs?$/i, /^the process$/i,
+      /^alumni$/i, /^partners$/i, /^fellowships$/i, /^scholarships$/i,
+      /^how can i/i, /^can i (save|use|withdraw|reset|apply|delete)/i,
+      /^i registered/i, /^i cannot/i, /^what do i need/i, /^why study/i,
+      /^latest news/i,
+    ]
+
+    const { data: opportunities } = await this.supabase
+      .from('opportunities')
+      .select('id, title, organization')
+      .in('status', ['pending', 'approved', 'featured'])
+
+    if (!opportunities?.length) return { success: true, message: 'No opportunities to check', data: { issuesCount: 0 } }
+
+    let rejected = 0
+    for (const opp of opportunities) {
+      const title = opp.title || ''
+      const org = opp.organization || ''
+      const isInvalid = REJECT_TITLE_PATTERNS.some(p => p.test(title)) ||
+        /read full article/i.test(org) || /read more/i.test(org)
+
+      if (isInvalid) {
+        await this.supabase
+          .from('opportunities')
+          .update({ status: 'rejected', tags: ['rejected:non-opportunity'] })
+          .eq('id', opp.id)
+        rejected++
+      }
+    }
+
+    return { success: true, message: `Rejected ${rejected} non-opportunity records`, data: { issuesCount: rejected } }
   }
 
   private async approvePending(): Promise<AgentResult> {
