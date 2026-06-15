@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { createHash } from 'crypto'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -8,7 +9,10 @@ export async function GET(request: Request) {
   const startTime = Date.now()
   try {
     const { searchParams } = new URL(request.url)
-    const maxDurationMs = parseInt(searchParams.get('maxDurationMs') || '25000')
+    const batches = (searchParams.get('batch') || '0').split(',').map(Number)
+    const totalBatches = parseInt(searchParams.get('totalBatches') || '8')
+    const maxDurationMs = parseInt(searchParams.get('maxDurationMs') || '90000')
+    const perSourceTimeout = parseInt(searchParams.get('perSourceMs') || '15000')
 
     const { createServiceClient } = await import('@/lib/supabase/client')
     const { getScrapingProvider } = await import('@/lib/scraping/provider')
@@ -22,67 +26,62 @@ export async function GET(request: Request) {
       .order('quality_score', { ascending: false })
 
     if (!sources?.length) {
-      return NextResponse.json({ success: true, message: 'No active sources', duration_seconds: 0 })
+      return NextResponse.json({ success: true, message: 'No active sources', duration_seconds: 0, timestamp: new Date().toISOString() })
     }
 
+    const batchSize = Math.ceil(sources.length / totalBatches)
     let crawled = 0
+    let timedOut = 0
     let errors = 0
-    const details: any[] = []
 
-    // Try up to 3 sources with individual timeouts
-    const sourcesToTry = sources.slice(0, 3)
-    const sourceTimeout = Math.min(maxDurationMs / sourcesToTry.length, 20000)
+    for (const batchIndex of batches) {
+      const batch = sources.slice(batchIndex * batchSize, (batchIndex + 1) * batchSize)
+      for (const source of batch) {
+        if (Date.now() - startTime > maxDurationMs) { timedOut++; continue }
 
-    for (const source of sourcesToTry) {
-      if (Date.now() - startTime > maxDurationMs) break
+        try {
+          const opportunities = await withTimeout(
+            provider.scrapeSource(source),
+            perSourceTimeout,
+            `scrape ${source.name}`,
+          )
 
-      const ac = new AbortController()
-      const timer = setTimeout(() => ac.abort(), sourceTimeout)
-
-      try {
-        // Wrap scrapeSource in a promise that rejects when aborted
-        const opportunities = await Promise.race([
-          provider.scrapeSource(source),
-          new Promise<never>((_, reject) => {
-            ac.signal.addEventListener('abort', () => reject(new Error(`Source timeout (${sourceTimeout}ms)`)))
-          }),
-        ])
-
-        for (const opp of opportunities) {
-          const { createHash } = await import('crypto')
-          const idHash = createHash('sha256').update(opp.title || opp.url || '').digest('hex').slice(0, 16)
-          await supabase.from('raw_opportunities').insert({
-            source_id: source.id,
-            title: opp.title || 'Untitled',
-            description: opp.description || null,
-            url: opp.url || null,
-            deadline: opp.deadline || null,
-            country: opp.country || null,
-            category: (opp.category || source.type || 'scholarship') as string,
-            organization: opp.organization || source.name || null,
-            eligibility: opp.eligibility || null,
-            source_hash: idHash,
-          })
+          for (const opp of opportunities) {
+            const idHash = createHash('sha256').update(opp.title || opp.url || '').digest('hex').slice(0, 16)
+            await supabase.from('raw_opportunities').insert({
+              source_id: source.id,
+              title: opp.title || 'Untitled',
+              description: opp.description || null,
+              url: opp.url || null,
+              deadline: opp.deadline || null,
+              country: opp.country || null,
+              category: (opp.category || source.type || 'scholarship') as string,
+              organization: opp.organization || source.name || null,
+              eligibility: opp.eligibility || null,
+              source_hash: idHash,
+            })
+          }
+          await supabase.from('sources').update({
+            last_crawled_at: new Date().toISOString(),
+            collection_success_rate: 100,
+          }).eq('id', source.id)
+          crawled++
+        } catch (e: any) {
+          errors++
+          await supabase.from('sources').update({
+            last_crawled_at: new Date().toISOString(),
+            collection_success_rate: 0,
+          }).eq('id', source.id)
         }
-        await supabase.from('sources').update({
-          last_crawled_at: new Date().toISOString(),
-          collection_success_rate: 100,
-        }).eq('id', source.id)
-        crawled++
-        details.push({ name: source.name, found: opportunities.length })
-      } catch (e: any) {
-        errors++
-        details.push({ name: source.name, error: e.message?.slice(0, 100) || String(e).slice(0, 100) })
-      } finally {
-        clearTimeout(timer)
       }
     }
 
     return NextResponse.json({
       success: true,
+      batches: batches.join(','),
       crawled,
+      timedOut,
       errors,
-      details,
       duration_seconds: ((Date.now() - startTime) / 1000).toFixed(1),
       timestamp: new Date().toISOString(),
     })
@@ -93,4 +92,13 @@ export async function GET(request: Request) {
       duration_seconds: ((Date.now() - startTime) / 1000).toFixed(1),
     }, { status: 500 })
   }
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`Timeout: ${label} (${ms}ms)`)), ms),
+    ),
+  ])
 }

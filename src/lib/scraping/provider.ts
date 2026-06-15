@@ -93,22 +93,14 @@ export class HttpScrapingProvider implements ScrapingProvider {
   providerName: ScrapingProviderName = 'http'
 
   async fetchPage(url: string): Promise<string> {
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 30000)
-    let response: Response
-    try {
-      response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'User-Agent': USER_AGENT,
-          Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        },
-        redirect: 'follow',
-        signal: controller.signal,
-      })
-    } finally {
-      clearTimeout(timeout)
-    }
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'User-Agent': USER_AGENT,
+        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      },
+      redirect: 'follow',
+    })
 
     if (!response.ok) {
       throw new Error(`HTTP fetch failed: ${response.status} ${response.statusText}`)
