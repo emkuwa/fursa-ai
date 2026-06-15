@@ -307,24 +307,6 @@ export const SOURCE_PROFILES: Record<string, SourceProfile> = {
     opportunityUrlPatterns: ['/job/', '/jobs/'],
     exclusionPatterns: ['/category/', '/tag/', '/page/'],
   },
-  'chevening.org': {
-    homepageUrl: 'https://www.chevening.org',
-    listingUrl: 'https://www.chevening.org/scholarships/',
-    sitemapUrl: 'https://www.chevening.org/sitemap.xml',
-    opportunityUrlPatterns: ['/scholarships','/awards','/news'],
-    paginationSelector: '.pagination a[rel="next"], .next',
-  },
-  'fulbright.org': {
-    homepageUrl: 'https://www.fulbright.org',
-    rssUrl: 'https://fulbright.org/feed/',
-    listingUrl: 'https://fulbright.org/',
-    opportunityUrlPatterns: ['/programs','/grants','/opportunities'],
-  },
-  'gatescambridge.org': {
-    homepageUrl: 'https://www.gatescambridge.org',
-    sitemapUrl: 'https://www.gatescambridge.org/sitemap.xml',
-    listingUrl: 'https://www.gatescambridge.org/',
-  },
   'ox.ac.uk': {
     homepageUrl: 'https://www.ox.ac.uk',
     sitemapUrl: 'https://www.ox.ac.uk/sitemap.xml',
@@ -607,18 +589,10 @@ export const SOURCE_PROFILES: Record<string, SourceProfile> = {
     homepageUrl: 'https://www.yesprogram.org',
     listingUrl: 'https://www.yesprogram.org/apply/',
   },
-  'worldbank.org': {
-    sitemapUrl: 'https://www.worldbank.org/sitemap.xml',
-    listingUrl: 'https://www.worldbank.org/en/search?q=scholarship',
-  },
   'unesco.org': {
     homepageUrl: 'https://www.unesco.org',
     sitemapUrl: 'https://www.unesco.org/sitemap.xml',
     listingUrl: 'https://www.unesco.org/en/scholarships',
-  },
-  'mastercardfdn.org': {
-    homepageUrl: 'https://www.mastercardfdn.org',
-    listingUrl: 'https://mastercardfdn.org/scholarships/',
   },
   'uct.ac.za': {
     homepageUrl: 'https://www.uct.ac.za',
