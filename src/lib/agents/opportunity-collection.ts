@@ -59,16 +59,7 @@ export class OpportunityCollectionAgent extends BaseAgent {
       }
       try {
         const result = await this.scrapeSource(source)
-        if (result > 0) {
-          await this.supabase
-            .from('sources')
-            .update({
-              last_crawled_at: new Date().toISOString(),
-              collection_count: this.supabase.rpc('increment', { x: result }),
-            } as any)
-            .eq('id', source.id)
-          successCount++
-        }
+        if (result > 0) successCount++
         total += result
       } catch (error) {
         errorCount++
