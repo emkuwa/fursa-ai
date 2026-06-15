@@ -133,6 +133,14 @@ export class HttpScrapingProvider implements ScrapingProvider {
       await this.collectListingPage(profile.searchUrl, source, profile, results)
     }
 
+    // Auto-discover sitemap.xml for any domain without a profile
+    if (profile && !profile.sitemapUrl && !profile.rssUrl && results.size < 3) {
+      const sitemapUrl = this.tryDiscoverSitemap(source.url)
+      if (sitemapUrl) {
+        await this.collectSitemap(sitemapUrl, source, results)
+      }
+    }
+
     if (!results.size) {
       try {
         const homeHtml = await this.fetchPage(source.url)
@@ -143,6 +151,21 @@ export class HttpScrapingProvider implements ScrapingProvider {
     }
 
     return Array.from(results.values())
+  }
+
+  private tryDiscoverSitemap(sourceUrl: string): string | null {
+    try {
+      const url = new URL(sourceUrl)
+      const candidates = [
+        `${url.origin}/sitemap.xml`,
+        `${url.origin}/sitemap_index.xml`,
+        `${url.origin}/sitemap/sitemap.xml`,
+      ]
+      // Return first candidate — the caller will handle fetch failures gracefully
+      return candidates[0]
+    } catch {
+      return null
+    }
   }
 
   async scrapeFeed(url: string): Promise<ScrapedOpportunity[]> {
