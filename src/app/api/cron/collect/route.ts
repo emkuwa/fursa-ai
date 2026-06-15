@@ -21,16 +21,21 @@ export async function GET(request: Request) {
   const maxDurationMs = parseInt(searchParams.get('maxDurationMs') || '90000', 10)
   const batches = batchParam.split(',').map(Number).filter(n => !isNaN(n))
 
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), (maxDurationMs + 15000))
+
   try {
     const results = []
     for (const b of batches) {
       const r = await new OpportunityCollectionAgent().run('collect', {
         batch: b,
         totalBatches,
-        maxDurationMs,
+        maxDurationMs: Math.min(maxDurationMs, 60000),
       })
       results.push({ batch: b, result: r })
     }
+
+    clearTimeout(timeout)
 
     const supabase = createServiceClient()
     const { count: rawCount } = await supabase
@@ -49,6 +54,7 @@ export async function GET(request: Request) {
       timestamp: new Date().toISOString(),
     })
   } catch (error) {
+    clearTimeout(timeout)
     return NextResponse.json({
       success: false,
       error: String(error),
